@@ -11,8 +11,10 @@ from constants import *
 
 
 class ScoreNumber(QLabel):
-    def __init__(self, digit='0', *args, **kwargs):
+    def __init__(self, game, digit='0', *args, **kwargs):
         super(ScoreNumber, self).__init__(*args, **kwargs)
+
+        self.game = game
 
         self.setFixedSize(UNIT, UNIT*2)
         self.setScaledContents(True)
@@ -35,10 +37,13 @@ class ScoreNumber(QLabel):
 
 class ScoreBoard(QWidget):
 
-    def __init__(self, value=0, *args, **kwargs):
+    def __init__(self, game, value=0, *args, **kwargs):
         super(ScoreBoard, self).__init__(*args, **kwargs)
 
-        self.numbers = [ScoreNumber(), ScoreNumber(), ScoreNumber()]
+        self.game = game
+
+        self.numbers = [ScoreNumber(self.game), ScoreNumber(
+            self.game), ScoreNumber(self.game)]
 
         self.layout = QHBoxLayout()
         self.layout.setSpacing(0)
@@ -68,19 +73,27 @@ class ScoreBoard(QWidget):
         self += 1
 
     def decrement(self):
-        self -= 1
+        self += -1
 
 
 class ResetButton(QLabel):
     click_release = pyqtSignal()
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, game, *args, **kwargs):
         super(ResetButton, self).__init__(*args, **kwargs)
+
+        self.game = game
 
         self.setFixedSize(UNIT*2, UNIT*2)
         self.setScaledContents(True)
 
         self.set_state(ResetButtonState.NORMAL)
+
+        # Connections
+        self.game.win_game.connect(
+            lambda: self.set_state(ResetButtonState.WON))
+        self.game.lose_game.connect(
+            lambda: self.set_state(ResetButtonState.LOST))
 
     def set_state(self, state: ResetButtonState):
         self.state = state
@@ -103,19 +116,21 @@ class ResetButton(QLabel):
 
 
 class MenuSection(QWidget):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, game, *args, **kwargs):
         super(MenuSection, self).__init__(*args, **kwargs)
+
+        self.game = game
+
+        self.score_board = ScoreBoard(self.game)
+        self.reset_button = ResetButton(self.game)
+        self.clock = ScoreBoard(self.game)
 
         self.layout = QHBoxLayout()
         self.setLayout(self.layout)
 
-        self.scoreBoard = ScoreBoard()
-        self.resetButton = ResetButton()
-        self.clock = ScoreBoard()
-
-        self.layout.addWidget(self.scoreBoard)
+        self.layout.addWidget(self.score_board)
         self.layout.addStretch()
-        self.layout.addWidget(self.resetButton)
+        self.layout.addWidget(self.reset_button)
         self.layout.addStretch()
         self.layout.addWidget(self.clock)
 
@@ -123,10 +138,14 @@ class MenuSection(QWidget):
 class Site(QLabel):
     click_hold = pyqtSignal()
     click_release = pyqtSignal([tuple])
+    flag_added = pyqtSignal()
+    flag_removed = pyqtSignal()
 
-    def __init__(self, r, c, *args, **kwargs):
+    def __init__(self, game, r, c, *args, **kwargs):
         super(Site, self).__init__(
             width=UNIT, height=UNIT, *args, **kwargs)
+
+        self.game = game
 
         self.setFixedSize(UNIT, UNIT)
         self.setScaledContents(True)
@@ -137,6 +156,9 @@ class Site(QLabel):
         self.has_mine = False
         self.count = 0
         self.unmark()
+
+        # Connections
+        self.game.lose_game.connect(self.reveal)
 
     def place_mine(self):
         self.has_mine = True
@@ -152,11 +174,16 @@ class Site(QLabel):
         if self.has_mine:
             self.set_state(SiteState.MINE)
 
+    def reveal(self):
+        if self.has_mine and self.state not in (SiteState.FLAG, SiteState.EXPLOSION):
+            self.show_mine()
+
     def sweep(self):
         if not self.swept:
             self.swept = True
             if self.has_mine:
                 self.set_state(SiteState.EXPLOSION)
+                self.game.lose_game.emit()
             else:
                 self.set_state(SiteState(self.count))
                 return self.count
@@ -164,18 +191,13 @@ class Site(QLabel):
     def mark(self):
         if not self.swept:
             if (self.state == SiteState.UNMARKED):
-                self.flag()
+                self.set_state(SiteState.FLAG)
+                self.flag_added.emit()
             elif (self.state == SiteState.FLAG):
-                self.question()
+                self.set_state(SiteState.QUESTION)
+                self.flag_removed.emit()
             elif (self.state == SiteState.QUESTION):
                 self.unmark()
-
-    def flag(self):
-        self.set_state(SiteState.FLAG)
-        # TODO: Increase some counter if mine (maybe in other class)
-
-    def question(self):
-        self.set_state(SiteState.QUESTION)
 
     def unmark(self):
         self.set_state(SiteState.UNMARKED)
@@ -191,6 +213,8 @@ class Site(QLabel):
         self.click_hold.emit()
 
     def mousePressEvent(self, mouse):
+        if not self.game.in_play:
+            return
         if not self.swept:
             if mouse.button() == Qt.LeftButton:
                 self.press()
@@ -198,14 +222,22 @@ class Site(QLabel):
                 self.mark()
 
     def mouseReleaseEvent(self, mouse):
+        if not self.game.in_play:
+            return
         if not self.swept:
             if mouse.button() == Qt.LeftButton:
                 self.click_release.emit(self.coord)
 
+        if all((site.swept or site.state == SiteState.FLAG) for site in self.game.game_section.mine_field.sites()):
+            self.game.win_game.emit()
+
 
 class MineField(QWidget):
-    def __init__(self, field_width=16, field_height=16, num_mines=40, *args, **kwargs):
+    def __init__(self, game, field_width=16, field_height=16, num_mines=40,
+                 *args, **kwargs):
         super(MineField, self).__init__(*args, **kwargs)
+
+        self.game = game
 
         self.setFixedSize(field_width*UNIT, field_height*UNIT)
 
@@ -219,18 +251,10 @@ class MineField(QWidget):
         self.field_width = field_width
         self.field_height = field_height
         self.num_mines = num_mines
-        self.field = [[Site(r, c) for c in range(self.field_width)]
+        self.field = [[Site(self.game, r, c) for c in range(self.field_width)]
                       for r in range(self.field_height)]
 
         self.add_sites()
-
-    def neighbors(self, site: Site):
-        x, y = site.coord
-        X, Y = self.field_width, self.field_height
-        for x2 in range(x-1, x+2):
-            for y2 in range(y-1, y+2):
-                if ((x != x2 or y != y2) and (0 <= x2 < X) and (0 <= y2 < Y)):
-                    yield self.field[x2][y2]
 
     def place_mines(self):
         for n in range(self.num_mines):
@@ -243,85 +267,106 @@ class MineField(QWidget):
             for site in self.neighbors(self.field[r][c]):
                 site.count += 1
 
+    def neighbors(self, site: Site):
+        x, y = site.coord
+        X, Y = self.field_width, self.field_height
+        for x2 in range(x-1, x+2):
+            for y2 in range(y-1, y+2):
+                if ((x != x2 or y != y2) and (0 <= x2 < X) and (0 <= y2 < Y)):
+                    yield self.field[x2][y2]
+
+    def sites(self):
+        for row in self.field:
+            for site in row:
+                yield site
+
     def add_sites(self):
         for r in range(self.field_width):
             for c in range(self.field_height):
                 self.layout.addWidget(self.field[r][c], r, c)
 
     def reset_field(self):
-        for row in self.field:
-            for site in row:
-                site.reset()
+        for site in self.sites():
+            site.reset()
 
 
 class GameSection(QWidget):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, game, *args, **kwargs):
         super(GameSection, self).__init__(*args, **kwargs)
 
-        self.mineField = MineField()
+        self.game = game
+
+        self.mine_field = MineField(self.game)
 
         self.layout = QHBoxLayout()
         self.setLayout(self.layout)
 
         self.layout.addStretch()
-        self.layout.addWidget(self.mineField)
+        self.layout.addWidget(self.mine_field)
         self.layout.addStretch()
 
 
 class Game(QWidget):
+    win_game = pyqtSignal()
+    lose_game = pyqtSignal()
+
     def __init__(self, *args, **kwargs):
         super(Game, self).__init__(*args, **kwargs)
         # Setup
-        self.menuSection = MenuSection()
-        self.gameSection = GameSection()
+        self.menu_section = MenuSection(self)
+        self.game_section = GameSection(self)
 
+        # Format
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
 
-        self.layout.addWidget(self.menuSection)
+        self.layout.addWidget(self.menu_section)
         self.layout.addStretch()
-        self.layout.addWidget(self.gameSection)
+        self.layout.addWidget(self.game_section)
         self.layout.addStretch()
 
         # Game Properties
         self.timer = QTimer()
-        self.in_play = False
 
         # Connections
-        self.timer.timeout.connect(self.menuSection.clock.increment)
-        self.menuSection.resetButton.click_release.connect(self.resetGame)
-        for r in self.gameSection.mineField.field:
+        self.lose_game.connect(self.end_game)
+        self.win_game.connect(self.end_game)
+        self.timer.timeout.connect(self.menu_section.clock.increment)
+        self.menu_section.reset_button.click_release.connect(self.reset_game)
+        for r in self.game_section.mine_field.field:
             for m in r:
-                m.click_release.connect(self.sweep)
+                m.click_release.connect(self.sweep_recursive)
+                m.flag_added.connect(self.menu_section.score_board.decrement)
+                m.flag_removed.connect(self.menu_section.score_board.increment)
 
-    def sweep(self, coord, prev=[]):
+    def sweep_recursive(self, coord):
+        # TODO: Move to Site class
         x, y = coord
-        site = self.gameSection.mineField.field[x][y]
+        site = self.game_section.mine_field.field[x][y]
+        if site.swept:
+            return
         site.sweep()
-        prev.append(coord)
         if site.count == 0 and not site.has_mine:
-            for neighbor in self.gameSection.mineField.neighbors(site):
-                if neighbor.coord not in prev and not neighbor.has_mine:
-                    print(x, y)
-                    self.sweep(neighbor.coord, prev)
+            for neighbor in self.game_section.mine_field.neighbors(site):
+                if not neighbor.has_mine:
+                    self.sweep_recursive(neighbor.coord)
 
-    def startGame(self):
-        self.gameSection.mineField.reset_field()
-        self.gameSection.mineField.place_mines()
-        self.menuSection.scoreBoard.update_value(
-            self.gameSection.mineField.num_mines)
+    def start_game(self):
+        self.game_section.mine_field.reset_field()
+        self.game_section.mine_field.place_mines()
+        self.menu_section.score_board.update_value(
+            self.game_section.mine_field.num_mines)
         self.timer.start(1000)
         self.in_play = True
 
-    def endGame(self):
-        # TODO: Reveal everything
-        self.menuSection.clock.update_value(0)
+    def end_game(self):
         self.timer.stop()
         self.in_play = False
 
-    def resetGame(self):
-        self.endGame()
-        self.startGame()
+    def reset_game(self):
+        self.end_game()
+        self.menu_section.clock.update_value(0)
+        self.start_game()
 
 
 class MainWindow(QMainWindow):
@@ -332,4 +377,4 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.game)
         self.setWindowTitle(GAME_NAME)
 
-        self.game.startGame()
+        self.game.start_game()
