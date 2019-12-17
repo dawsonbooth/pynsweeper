@@ -1,6 +1,5 @@
 from random import randint
 
-import numpy as np
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
