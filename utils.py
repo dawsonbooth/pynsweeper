@@ -1,13 +1,12 @@
+from collections import defaultdict
 from random import randint
 
-import numpy as np
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
-from collections import defaultdict
-
-from constants import *
+from constants import (GAME_NAME, IMAGE_PATH, IMAGES, UNIT, ResetButtonState,
+                       ScoreNumberState, SiteState)
 
 
 class ScoreNumber(QLabel):
@@ -257,7 +256,7 @@ class MineField(QWidget):
         self.add_sites()
 
     def place_mines(self):
-        for n in range(self.num_mines):
+        for _ in range(self.num_mines):
             r = randint(0, self.field_width - 1)
             c = randint(0, self.field_height - 1)
             while self.field[r][c].has_mine:
