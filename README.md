@@ -1,6 +1,4 @@
-<div align="center">
-<img src="images/smiley_cool.png" width="150" height="150" />
-</div>
+![pynsweeper](https://raw.githubusercontent.com/dawsonbooth/pynsweeper/master/docs/social.png)
 
 Pynsweeper. Get it? PY-nsweeper. Like MINE-sweeper? But PY-thonic??
 
