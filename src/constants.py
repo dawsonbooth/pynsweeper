@@ -1,6 +1,14 @@
+import os
+import sys
 from enum import Enum
 
-IMAGE_PATH = "assets/png/{image}.png"
+try:
+    base_path = sys._MEIPASS
+except Exception:
+    base_path = os.path.abspath(".")
+
+IMAGE_PATH = os.path.join(base_path, "assets/png/{image}.png")
+
 
 IMAGES = {
     # Number Board

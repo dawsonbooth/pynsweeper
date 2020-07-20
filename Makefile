@@ -3,21 +3,31 @@ SOURCE = src/main.py
 VERSION := $(shell poetry version | grep -oE '[^ ]+$$')
 
 PLATFORM :=
+DATA :=
+ICON :=
 ifeq ($(OS),Windows_NT)
 	PLATFORM = win32
+	DATA = "assets;assets"
+	ICON = assets/ico/icon.ico
 else
 	UNAME_S := $(shell uname -s)
 	ifeq ($(UNAME_S),Linux)
 		PLATFORM = linux
+		DATA = "assets:assets"
+		ICON = assets/ico/icon.icns
 	endif
 	ifeq ($(UNAME_S),Darwin)
 		PLATFORM = darwin
+		DATA = "assets:assets"
+		ICON = assets/ico/icon.ico
 	endif
 endif
 
 FILENAME = pynsweeper-$(VERSION)-$(PLATFORM)
 
-BUILDFLAGS = --onefile --name $(FILENAME) --windowed
+BUILDFLAGS = --onefile --windowed --name $(FILENAME) --icon $(ICON) --add-data $(DATA)
+
+.PHONY: all list clean release build version
 
 all: list
 
@@ -35,7 +45,7 @@ release:
 	git tag v$(VERSION)
 	git push origin v$(VERSION)
 
-build:
+build: clean
 	@poetry run pyinstaller $(BUILDFLAGS) $(SOURCE)
 
 version:
