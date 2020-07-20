@@ -110,18 +110,18 @@ jobs:
       - name: Download Linux release file
         uses: actions/download-artifact@master
         with:
-          name: PROJECT_NAME-${{ steps.version.outputs.version }}-linux
-          path: ./dist/PROJECT_NAME-${{ steps.version.outputs.version }}-linux
+          name: pynsweeper-${{ steps.version.outputs.version }}-linux
+          path: ./dist/pynsweeper-${{ steps.version.outputs.version }}-linux
       - name: Download MacOS release file
         uses: actions/download-artifact@master
         with:
-          name: PROJECT_NAME-${{ steps.version.outputs.version }}-darwin
-          path: ./dist/PROJECT_NAME-${{ steps.version.outputs.version }}-darwin
+          name: pynsweeper-${{ steps.version.outputs.version }}-darwin
+          path: ./dist/pynsweeper-${{ steps.version.outputs.version }}-darwin
       - name: Download Windows release file
         uses: actions/download-artifact@master
         with:
-          name: PROJECT_NAME-${{ steps.version.outputs.version }}-win32.exe
-          path: ./dist/PROJECT_NAME-${{ steps.version.outputs.version }}-win32.exe
+          name: pynsweeper-${{ steps.version.outputs.version }}-win32.exe
+          path: ./dist/pynsweeper-${{ steps.version.outputs.version }}-win32.exe
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -138,8 +138,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/PROJECT_NAME-${{ steps.version.outputs.version }}-linux/PROJECT_NAME-${{ steps.version.outputs.version }}-linux
-          asset_name: PROJECT_NAME-${{ steps.version.outputs.version }}-linux
+          asset_path: ./dist/pynsweeper-${{ steps.version.outputs.version }}-linux/pynsweeper-${{ steps.version.outputs.version }}-linux
+          asset_name: pynsweeper-${{ steps.version.outputs.version }}-linux
           asset_content_type: application/octet-stream
       - name: Upload MacOS release file asset
         uses: actions/upload-release-asset@v1.0.1
@@ -147,8 +147,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/PROJECT_NAME-${{ steps.version.outputs.version }}-darwin/PROJECT_NAME-${{ steps.version.outputs.version }}-darwin
-          asset_name: PROJECT_NAME-${{ steps.version.outputs.version }}-darwin
+          asset_path: ./dist/pynsweeper-${{ steps.version.outputs.version }}-darwin/pynsweeper-${{ steps.version.outputs.version }}-darwin
+          asset_name: pynsweeper-${{ steps.version.outputs.version }}-darwin
           asset_content_type: application/octet-stream
       - name: Upload Windows release file asset
         uses: actions/upload-release-asset@v1.0.1
@@ -156,6 +156,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/PROJECT_NAME-${{ steps.version.outputs.version }}-win32.exe/PROJECT_NAME-${{ steps.version.outputs.version }}-win32.exe
-          asset_name: PROJECT_NAME-${{ steps.version.outputs.version }}-win32.exe
+          asset_path: ./dist/pynsweeper-${{ steps.version.outputs.version }}-win32.exe/pynsweeper-${{ steps.version.outputs.version }}-win32.exe
+          asset_name: pynsweeper-${{ steps.version.outputs.version }}-win32.exe
           asset_content_type: application/octet-stream
