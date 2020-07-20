@@ -1,6 +1,6 @@
 from enum import Enum
 
-IMAGE_PATH = "images/{image}.png"
+IMAGE_PATH = "assets/png/{image}.png"
 
 IMAGES = {
     # Number Board

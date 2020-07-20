@@ -1,29 +1,29 @@
+# `pynsweeper`
 ![pynsweeper](https://raw.githubusercontent.com/dawsonbooth/pynsweeper/master/docs/social.png)
 
 Pynsweeper. Get it? PY-nsweeper. Like MINE-sweeper? But PY-thonic??
 
-# Description
+
+## Description
 
 This Python program is a clone for the Windows XP Minesweeper. The UI that resembles that of the classic game with PyQt5. Further plans include adding a settings pane to the UI for changing the board size and mine density.
 
-# Installation
+## Installation
 
-With Git installed, simply clone the repository using the command:
+With [Git](https://git-scm.com/downloads), [Python](https://www.python.org/downloads/), and [Poetry](https://python-poetry.org/docs/) installed, simply run the following command to get the project on your machine.
 
-```
-git clone https://github.com/dawsonbooth/pynsweeper.git
-```
-
-Next, make sure PyQt5 is installed:
-
-```
-pip install PyQt5
+```bash
+git clone https://github.com/dawsonbooth/pynsweeper
 ```
 
-# Usage
+## Usage
 
 The main file, `main.py` will open a familiar graphical interface upon execution, and can be executed as follows:
 
 ```
 python main.py
 ```
+
+## License
+
+This software is released under the terms of [MIT license](LICENSE).
