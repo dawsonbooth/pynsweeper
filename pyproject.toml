@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pynsweeper"
-version = "1.0.2"
+version = "1.0.3"
 description = ""
 authors = ["Dawson Booth <github@dawsonbooth.com>"]
 license = "MIT"
