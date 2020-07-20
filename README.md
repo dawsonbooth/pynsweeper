@@ -1,5 +1,5 @@
 # `pynsweeper`
-![pynsweeper](https://raw.githubusercontent.com/dawsonbooth/pynsweeper/master/docs/social.png)
+![pynsweeper](https://raw.githubusercontent.com/dawsonbooth/pynsweeper/master/assets/png/social.png)
 
 Pynsweeper. Get it? PY-nsweeper. Like MINE-sweeper? But PY-thonic??
 
